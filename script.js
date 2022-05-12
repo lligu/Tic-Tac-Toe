@@ -1,12 +1,23 @@
 // Gameboard setup
 const Gameboard = (() => {
-    const _BoardTile = () => {
+    const _BoardTile = (index) => {
+        const tileDiv = document.querySelector(`#tile${index}`);
         let sign = "free";
-        return { sign };
+        const signTile = (sign) => {
+            if (sign !== "free") {
+                if (sign === playerUser.sign) {
+                    tileDiv.style.color = "green";
+                } else {
+                    tileDiv.style.color = "red";
+                }
+                tileDiv.textContent = sign.toUpperCase();
+            }
+        }
+        return { signTile, index, sign, tileDiv };
     };
     let gameboard = [];
     for (i = 0; i < 9; i++) {
-        gameboard.push(_BoardTile());
+        gameboard.push(_BoardTile(i));
         // array index config
         // 0 | 1 | 2
         // ---------
@@ -21,20 +32,52 @@ const Gameboard = (() => {
 // Players setup
 const Player = (sign) => {
     const move = (position) => {
-        Gameboard.gameboard[position].sign = sign;
-        if (Gameflow.checkBoard() === true) {
-            Gameflow.winGame(sign.toUpperCase())
-        };
+        if (Gameboard.gameboard[position].sign === "free") {
+            Gameboard.gameboard[position].sign = sign;
+            Gameboard.gameboard[position].signTile(sign);
+            Gameflow.checkBoard(sign);
+        }
     }
-    return { move };
+    const computerMove = () => {
+        let randomIndex = Math.floor(Math.random() * (Math.floor(9) - Math.ceil(0)) + 0);
+        if (Gameflow.checkBoard(sign) === "false") {
+            if (Gameboard.gameboard[randomIndex].sign === "free") {
+                move(randomIndex);
+            } else {
+                computerMove();
+            }
+        }
+    }
+    return { computerMove, move, sign };
 }
-const playerX = Player("x");
-const playerO = Player("o");
-
+let playerUser;
+let playerComputer;
 
 // Gameflow setup
 const Gameflow = (() => {
-    const checkBoard = () => {
+    const _gameboardFadeOut = (winner) => {
+        const _gameboardDiv = document.querySelector('.gameboard');
+        const _gameboardWall = document.querySelector('.gameboardWall');
+        const _winnerH1 = document.querySelector('.winnerH1');
+        const _winnerSpan = document.querySelector('.winnerSpan');
+        _gameboardDiv.style.opacity = 0;
+        if (winner === "x" || winner === "o") {
+            _winnerH1.textContent = "Game won by";
+            if (playerUser.sign === winner) {
+                _winnerSpan.style.color = "green";
+            } else {
+                _winnerSpan.style.color = "red";
+            }
+            _winnerSpan.textContent = `${winner.toUpperCase()}`
+        } else {
+            _winnerH1.textContent = "The game is a tie!";
+            _winnerSpan.style.display = "none";
+        }
+        _gameboardWall.style.display = "flex";
+        setTimeout(() => { _gameboardWall.style.opacity = 1; _gameboardDiv.style.display = "none" }, 1000)
+    }
+    let _isWin = false;
+    const checkBoard = (currPlayer) => {
         const _tile0 = Gameboard.gameboard[0].sign;
         const _tile1 = Gameboard.gameboard[1].sign;
         const _tile2 = Gameboard.gameboard[2].sign;
@@ -53,17 +96,70 @@ const Gameflow = (() => {
             _tile6 !== "free" && _tile6 === _tile7 && _tile7 === _tile8 ||
             _tile0 !== "free" && _tile0 === _tile4 && _tile4 === _tile8 ||
             _tile6 !== "free" && _tile6 === _tile4 && _tile4 === _tile2) {
-            return true;
+            if (_isWin === false) {
+                _isWin = true;
+                _gameboardFadeOut(currPlayer);
+            }
+            return "true";
+        } else if (
+            _tile0 !== "free" && _tile1 !== "free" && _tile2 !== "free" &&
+            _tile3 !== "free" && _tile4 !== "free" && _tile5 !== "free" &&
+            _tile6 !== "free" && _tile7 !== "free" && _tile8 !== "free") {
+            if (_isWin === false) {
+                _isWin = true;
+                _gameboardFadeOut("tie");
+            }
+            return "tie";
         } else {
-            return false;
+            return "false";
         }
     };
-    const winGame = (player) => {
-        console.log(`Game won by ${player}`);
-    }
-    return { checkBoard, winGame };
+    return { checkBoard };
 })()
 
 
-// Testing
-console.log(Gameboard.gameboard)
+// Controls setup 
+const Controls = (() => {
+    const _chooseCard = document.querySelector('.chooseCard');
+    const _gameboardDiv = document.querySelector('.gameboard');
+    const _gameStart = document.querySelector('#gameStart');
+    const _gameRestart = document.querySelector('#gameRestart');
+    const _chooseX = document.querySelector('#chooseX');
+    const _chooseO = document.querySelector('#chooseO');
+    _chooseX.addEventListener('click', () => {
+        _chooseO.classList.remove('signChoosen');
+        _chooseX.classList.add('signChoosen');
+        _gameStart.style.opacity = 1;
+        playerUser = Player('x');
+        playerComputer = Player('o');
+    })
+    _chooseO.addEventListener('click', () => {
+        _chooseX.classList.remove('signChoosen');
+        _chooseO.classList.add('signChoosen');
+        _gameStart.style.opacity = 1;
+        playerUser = Player('o');
+        playerComputer = Player('x');
+    })
+    _gameStart.addEventListener('click', () => {
+        _chooseCard.style.opacity = 0;
+        setTimeout(() => {
+            _chooseCard.style.display = "none";
+            _gameboardDiv.style.display = "grid";
+        }, 750)
+        setTimeout(() => {
+            _gameboardDiv.style.opacity = 1;
+        }, 800)
+    })
+    _gameRestart.addEventListener('click', () => {
+        location.reload();
+    })
+    Gameboard.gameboard.forEach(tile => {
+        tile.tileDiv.addEventListener('click', () => {
+            sign = tile.sign;
+            playerUser.move(tile.index);
+            if (sign === "free") {
+                playerComputer.computerMove();
+            }
+        }, { once: true })
+    })
+})();
