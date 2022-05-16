@@ -6,9 +6,9 @@ const Gameboard = (() => {
         const signTile = (sign) => {
             if (sign !== "free") {
                 if (sign === playerUser.sign) {
-                    tileDiv.style.color = "green";
+                    tileDiv.style.color = "#0081CC";
                 } else {
-                    tileDiv.style.color = "red";
+                    tileDiv.style.color = "#EF3E36";
                 }
                 tileDiv.textContent = sign.toUpperCase();
             }
@@ -64,9 +64,9 @@ const Gameflow = (() => {
         if (winner === "x" || winner === "o") {
             _winnerH1.textContent = "Game won by";
             if (playerUser.sign === winner) {
-                _winnerSpan.style.color = "green";
+                _winnerSpan.style.color = "#0081CC";
             } else {
-                _winnerSpan.style.color = "red";
+                _winnerSpan.style.color = "#EF3E36";
             }
             _winnerSpan.textContent = `${winner.toUpperCase()}`
         } else {
@@ -163,3 +163,7 @@ const Controls = (() => {
         }, { once: true })
     })
 })();
+
+
+// AI?
+moves = [1, 2, 3, 4, 5, 6, 7, 8, 9];
